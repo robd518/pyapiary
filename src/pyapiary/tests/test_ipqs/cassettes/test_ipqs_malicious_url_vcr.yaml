@@ -13,11 +13,11 @@ interactions:
       content-type:
       - application/json
       host:
-      - ipqualityscore.com
+      - www.ipqualityscore.com
       user-agent:
       - python-httpx/0.28.1
     method: POST
-    uri: https://ipqualityscore.com/api/json/url/
+    uri: https://www.ipqualityscore.com/api/json/url/
   response:
     body:
       string: !!binary |

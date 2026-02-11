@@ -15,7 +15,7 @@ class IPQSConnector(Broker):
         api_key (str): The API key used to authenticate with IPQS.
     """
     def __init__(self, api_key: Optional[str] = None, **kwargs):
-        super().__init__(base_url="https://ipqualityscore.com/api/json", **kwargs)
+        super().__init__(base_url="https://www.ipqualityscore.com/api/json", **kwargs)
 
         self.api_key = api_key or self.env_config.get("IPQS_API_KEY")
         if not self.api_key:
@@ -43,7 +43,7 @@ class AsyncIPQSConnector(AsyncBroker):
     Async version of IPQSConnector using AsyncBroker infrastructure.
     """
     def __init__(self, api_key: Optional[str] = None, **kwargs):
-        super().__init__(base_url="https://ipqualityscore.com/api/json", **kwargs)
+        super().__init__(base_url="https://www.ipqualityscore.com/api/json", **kwargs)
 
         self.api_key = api_key or self.env_config.get("IPQS_API_KEY")
         if not self.api_key:

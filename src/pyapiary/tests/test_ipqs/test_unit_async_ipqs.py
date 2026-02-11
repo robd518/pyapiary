@@ -31,7 +31,7 @@ async def test_async_init_missing_key():
 async def test_async_malicious_url(mock_post):
     import json
 
-    request = httpx.Request("POST", "https://ipqualityscore.com/api/json/url/")
+    request = httpx.Request("POST", "https://www.ipqualityscore.com/api/json/url/")
     payload = {"success": True, "domain": "example.com"}
     mock_response = httpx.Response(
         200,
