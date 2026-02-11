@@ -1,6 +1,5 @@
 import httpx
 from typing import Optional
-from urllib.parse import quote
 from pyapiary.api_connectors.broker import Broker, AsyncBroker, bubble_broker_init_signature, log_method_call
 
 @bubble_broker_init_signature()
@@ -21,7 +20,7 @@ class IPQSConnector(Broker):
         self.api_key = api_key or self.env_config.get("IPQS_API_KEY")
         if not self.api_key:
             raise ValueError("API key is required for IPQSConnector")
-        self.headers.update({"Content-Type": "application/json"})
+        self.headers.update({"Content-Type": "application/x-www-form-urlencoded"})
 
     @log_method_call
     def malicious_url(self, query: str, **kwargs) -> httpx.Response:
@@ -29,14 +28,13 @@ class IPQSConnector(Broker):
         Scan a URL using IPQualityScore's Malicious URL Scanner API.
 
         Args:
-            query (str): The URL to scan (will be URL-encoded).
+            query (str): The URL to scan.
             **kwargs: Optional parameters like 'strictness' or 'fast' to influence scan behavior.
 
         Returns:
             httpx.Response: the httpx.Response object
         """
-        encoded_query: str = quote(query, safe="")
-        return self.post(f"/url/", json={"url": query, "key": self.api_key, **kwargs})
+        return self.post("/url/", data={"url": query, "key": self.api_key, **kwargs})
 
 
 @bubble_broker_init_signature()
@@ -50,7 +48,7 @@ class AsyncIPQSConnector(AsyncBroker):
         self.api_key = api_key or self.env_config.get("IPQS_API_KEY")
         if not self.api_key:
             raise ValueError("API key is required for AsyncIPQSConnector")
-        self.headers.update({"Content-Type": "application/json"})
+        self.headers.update({"Content-Type": "application/x-www-form-urlencoded"})
 
     @log_method_call
     async def malicious_url(self, query: str, **kwargs) -> httpx.Response:
@@ -58,11 +56,10 @@ class AsyncIPQSConnector(AsyncBroker):
         Asynchronously scan a URL using IPQualityScore's Malicious URL Scanner API.
 
         Args:
-            query (str): The URL to scan (will be URL-encoded).
+            query (str): The URL to scan.
             **kwargs: Optional parameters like 'strictness' or 'fast' to influence scan behavior.
 
         Returns:
             httpx.Response: the httpx.Response object
         """
-        encoded_query: str = quote(query, safe="")
-        return await self.post(f"/url/", json={"url": query, "key": self.api_key, **kwargs})
+        return await self.post("/url/", data={"url": query, "key": self.api_key, **kwargs})

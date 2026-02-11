@@ -8,7 +8,7 @@ from pyapiary.api_connectors.ipqs import AsyncIPQSConnector
 async def test_async_init_with_api_key():
     connector = AsyncIPQSConnector(api_key="test_key")
     assert connector.api_key == "test_key"
-    assert connector.headers["Content-Type"] == "application/json"
+    assert connector.headers["Content-Type"] == "application/x-www-form-urlencoded"
 
 
 @pytest.mark.asyncio
@@ -16,7 +16,7 @@ async def test_async_init_with_env_key():
     with patch.dict("os.environ", {"IPQS_API_KEY": "env_key"}):
         connector = AsyncIPQSConnector(load_env_vars=True)
         assert connector.api_key == "env_key"
-        assert connector.headers["Content-Type"] == "application/json"
+        assert connector.headers["Content-Type"] == "application/x-www-form-urlencoded"
 
 
 @pytest.mark.asyncio
@@ -49,5 +49,5 @@ async def test_async_malicious_url(mock_post):
     assert response.json() == payload
     mock_post.assert_awaited_once_with(
         "/url/",
-        json={"url": "example.com", "key": "test_key", "strictness": 1}
+        data={"url": "example.com", "key": "test_key", "strictness": 1}
     )
