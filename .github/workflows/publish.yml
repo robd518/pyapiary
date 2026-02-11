@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release-and-publish:
-    if: contains(github.event.head_commit.message, 'ci: bump version')
+    if: "${{ contains(github.event.head_commit.message, 'ci: bump version') }}"
     runs-on: ubuntu-latest
 
     steps:
@@ -69,5 +69,4 @@ jobs:
         tag_name: v${{ steps.version.outputs.version }}
         name: v${{ steps.version.outputs.version }}
         generate_release_notes: true
-
 
