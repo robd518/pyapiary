@@ -1,19 +1,25 @@
-name: Publish to PyPI
+name: Release and Publish
 
 on:
   push:
-    tags:
-      - 'v*'  # This will trigger the workflow for any tag starting with 'v'
+    branches:
+      - main
+
+permissions:
+  contents: write
 
 jobs:
-  build-and-publish:
+  release-and-publish:
+    if: "${{ contains(github.event.head_commit.message, 'ci: bump version') }}"
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
@@ -28,21 +34,39 @@ jobs:
     - name: Run unit tests only
       run: poetry run pytest -m "not integration"
 
-    - name: Check version
+    - name: Read version
+      id: version
       run: |
         pkg_version=$(poetry version -s)
-        tag_version=${GITHUB_REF#refs/tags/v}
-        if [ "$pkg_version" != "$tag_version" ]; then
-          echo "Version mismatch: pyproject.toml ($pkg_version) != Git tag ($tag_version)"
-          exit 1
+        echo "version=$pkg_version" >> "$GITHUB_OUTPUT"
+
+    - name: Check existing tag
+      id: tag
+      run: |
+        tag="v${{ steps.version.outputs.version }}"
+        if git tag -l "$tag" | grep -q "$tag"; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Build package
+      if: steps.tag.outputs.exists == 'false'
       run: poetry build
 
     - name: Publish to PyPI
+      if: steps.tag.outputs.exists == 'false'
       env:
         PYPI_TOKEN: ${{ secrets.PYPI_PUBLISH }}
       run: |
         poetry config pypi-token.pypi $PYPI_TOKEN
-        poetry publish
+        poetry publish --skip-existing
+
+    - name: Create GitHub release
+      if: steps.tag.outputs.exists == 'false'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        name: v${{ steps.version.outputs.version }}
+        generate_release_notes: true
+
