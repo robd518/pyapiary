@@ -1,0 +1,111 @@
+name: Version Bump
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Determine bump from branch prefix
+        id: bump
+        run: |
+          ref="${{ github.event.pull_request.head.ref }}"
+          if [[ "$ref" == major/* || "$ref" == breaking/* ]]; then
+            echo "bump=major" >> "$GITHUB_OUTPUT"
+          elif [[ "$ref" == minor/* || "$ref" == feature/* ]]; then
+            echo "bump=minor" >> "$GITHUB_OUTPUT"
+          elif [[ "$ref" == patch/* || "$ref" == bugfix/* || "$ref" == fix/* ]]; then
+            echo "bump=patch" >> "$GITHUB_OUTPUT"
+          else
+            echo "bump=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: No bump prefix
+        if: steps.bump.outputs.bump == ''
+        run: echo "No version bump prefix found on branch; skipping."
+
+      - name: Set up Python
+        if: steps.bump.outputs.bump != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Poetry
+        if: steps.bump.outputs.bump != ''
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        if: steps.bump.outputs.bump != ''
+        run: poetry install --all-extras
+
+      - name: Run unit tests
+        if: steps.bump.outputs.bump != ''
+        run: poetry run pytest -m "not integration"
+
+      - name: Bump version
+        if: steps.bump.outputs.bump != ''
+        id: version
+        env:
+          BUMP: ${{ steps.bump.outputs.bump }}
+        run: |
+          new_version=$(python - <<'PY'
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+
+          bump = os.environ["BUMP"]
+          path = Path("pyproject.toml")
+          data = tomllib.loads(path.read_text())
+          version = data["tool"]["poetry"]["version"]
+          major, minor, patch = map(int, version.split("."))
+
+          if bump == "major":
+              major += 1
+              minor = 0
+              patch = 0
+          elif bump == "minor":
+              minor += 1
+              patch = 0
+          elif bump == "patch":
+              patch += 1
+
+          new_version = f"{major}.{minor}.{patch}"
+          text = path.read_text()
+          new_text = re.sub(r'(?m)^version\s*=\s*"\d+\.\d+\.\d+"', f'version = "{new_version}"', text)
+          if text == new_text:
+              raise SystemExit("version line not found")
+          path.write_text(new_text)
+          print(new_version)
+          PY
+          )
+          echo "version=$new_version" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push version bump
+        if: steps.bump.outputs.bump != ''
+        run: |
+          if git diff --quiet; then
+            echo "No version change; skipping commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "ci: bump version to ${{ steps.version.outputs.version }}"
+          git push
