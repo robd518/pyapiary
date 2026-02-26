@@ -136,9 +136,10 @@ class SharedConnectorBase:
         self.env_config = combine_env_configs() if load_env_vars else {}
         self._client_kwargs = dict(client_kwargs) if client_kwargs else {}
 
-    def _log(self, message: str):
+    def _log(self, message: str, level: str = "info"):
         if self.logger:
-            self.logger.info(message)
+            log_fn = getattr(self.logger, level, self.logger.info)
+            log_fn(message)
 
     def _collect_proxy_config(self) -> tuple[Optional[str], Optional[Dict[str, httpx.HTTPTransport]]]:
         source_env: Optional[Dict[str, str]] = None
@@ -290,10 +291,10 @@ class Broker(SharedConnectorBase):
             return call()
         except RetryError as re:
             last = re.last_attempt.exception()
-            self._log(f"Retry failed: {last}")
+            self._log(f"Retry failed: {last}", level="error")
             raise
         except httpx.HTTPStatusError as he:
-            self._log(f"HTTP error: {he}")
+            self._log(f"HTTP error: {he}", level="error")
             raise
 
     def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None, **kwargs) -> httpx.Response:
@@ -402,10 +403,10 @@ class AsyncBroker(SharedConnectorBase):
             return await call()
         except RetryError as re:
             last = re.last_attempt.exception()
-            self._log(f"Retry failed: {last}")
+            self._log(f"Retry failed: {last}", level="error")
             raise
         except httpx.HTTPStatusError as he:
-            self._log(f"HTTP error: {he}")
+            self._log(f"HTTP error: {he}", level="error")
             raise
 
     async def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None, **kwargs) -> httpx.Response:
