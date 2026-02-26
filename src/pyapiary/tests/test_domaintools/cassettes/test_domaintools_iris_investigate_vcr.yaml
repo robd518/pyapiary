@@ -1,0 +1,88 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.domaintools.com
+      user-agent:
+      - REDACTED
+      x-api-key:
+      - REDACTED
+    method: GET
+    uri: https://api.domaintools.com/v1/iris-investigate?domain=domaintools.com
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      access-control-allow-origin:
+      - '*'
+      cache-control:
+      - no-store, no-cache, must-revalidate
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - 'default-src * data: blob: ''unsafe-eval'' ''unsafe-inline'''
+      content-type:
+      - application/json;charset=utf-8
+      date:
+      - Thu, 26 Feb 2026 15:47:26 GMT
+      expires:
+      - Thu, 19 Nov 1981 08:52:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - Chuck Norris fears nothing that is not Emily.
+      set-cookie:
+      - dtsession=hqbf19kre196nc61pgjtm4cld8vcu5r9gl522scebk98c3n0hp9s8ed2s1mndnqguovi99bue8mp5n4jhhthrq7qscaaq5slug723q6;
+        expires=Sat, 28-Mar-2026 15:47:26 GMT; Max-Age=2592000; path=/; domain=.domaintools.com;
+        secure; HttpOnly
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-time:
+      - '80027'
+    status:
+      code: 200
+      message: OK
+version: 1

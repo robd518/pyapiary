@@ -1,0 +1,77 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - api.domaintools.com
+      user-agent:
+      - REDACTED
+      x-api-key:
+      - REDACTED
+    method: GET
+    uri: https://api.domaintools.com/v1/domaintools.com/whois/parsed
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA+1XXW/qOBD9Kxb7eGlIQkohTzcb6F6kNiACF927VFEILkQCO0pMP7bqf9+xHfIB
+        SYr2eSWEyMzx2HOOMzN8tGKcRJQkuGV+wO9tmLDYJ6xltob04IdkTuk+aaOHB7vVzvwspITjgxj7
+        DG8ArA0G/RsVPjrA8FsUQlgw66p+J8wamI/RJkWDWQXbjTooBI3BgR16OG2WMJ8dEx7m71awDzFh
+        czhZ8ozjaUx34TrksZ4+2y3iH7CX4PgFxwI8dFxNmaqG4rgTZ6Q4ozlEA6NeZexWGY0z41O79bqj
+        YcJz5jnIFHqQ7Y1+K1IIaLzJOEMOnMhEG/HAOIFKQA8rMpOZvqMUNh6aSOsN7rqa7g0nj9bY8ezJ
+        483PmetkYD9Gyx+TsYtckaApn5SRM3lUAFzELWYP4F4uhVPGcyVmIZlHQ/g2Uc7+XO+aas/UB4qq
+        /l4Rm8sJ0qa4XNO5apiqCh+Jy7ecFS4EGnHZiwFy9esCmIiftY3Gjq0U444txxL0GP0VSdlyxX0w
+        Ud1dQDvGosRcdVad19dXJQx8QhQab1cdHEV/1K3KdyUs1S3dz9ocQiKzo3EJNom3Pgn/Eame4Pl7
+        UoK6LMaYARWaqiGD7ZD1gisB7hFOg7Q7XS257ZC9gxN0YfvzhcDxqgOZvIQkgGMvrZJ/SuEF2iOb
+        bsA36Gu6Vg5MjwSuookWbnnZjhJY8E1TdLXX7/YHavf2EgBaw5lL9nv/rbTstldyj4CkvYkO+LCG
+        1xTuchjg5PvFKyJIT3WYjYaWPR8N0f1khqaz8U/L/nVClCVoQp4IvgZzepasN684Y78JXJKiCZiJ
+        0hhNKvQl5KSRNAl5mtakAlVD5jjYNaoiANeIIoDNmpQg6WOTIin+KkEE9go95KbNcshYTWrkiJMY
+        wtKghfA3SsFVyJrBZau7BOhfAbpfAYxzANjckW2iI0nCLSkW0RhZa2jaQB1hfpC99tafC3f0vapp
+        leF59TH028GdYfT6A2hfswdEnxHbYTS2LcdJOyI0GR+B4Os9PkAnimjMQrJF7nvC8MFEP+bzqSva
+        gVikTGZ/rTrLsX2/Ii2YGiIfytDGy/u6KEXQw89qErT3dMzx0tZf0Re/ie98xvHyKeG81WZQOSUV
+        oefNMoNeNwpdTkIbkmhKBNqRBHhVCGYQDIx6lbFbZTTOjE+lee1D7AiHz7s4Ko5wPhfXC6S4XsTF
+        BXBJ3QsU5jcGUOUrA7DQJ74X8inL6HOmY46qGHfafA7IxgBM6EEqelJTKJ6yxCOU5il+M9KTJOcT
+        cZZt1YAAgWHWqB6bE1HLuCDFMQAcedPnxAZQ4yBA2uxT2fl+SwseIlG04En0cn4rZXUCy8Ll/pzd
+        vHOD/dl/K1tve/zypSw392POhs+zLCRfVZWy5GucOQGVgDz32vWSiBp3Rk2NP2eqLkDKXY1bUljj
+        PDFZ6Qb+GFT0/+n7z/Stw/0eqnqBwYytIjM5B4V8i7mV8iicOTtf4SytT9iYQruJvSimEYa+gmWP
+        IEmCA0CcGl/+9/Xdk++OrFA1/+pEYPln0UvoMQ5wRb/5/PwX1zFVT5UPAAA=
+    headers:
+      access-control-allow-origin:
+      - '*'
+      cache-control:
+      - no-store, no-cache, must-revalidate
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - 'default-src * data: blob: ''unsafe-eval'' ''unsafe-inline'''
+      content-type:
+      - application/json;charset=utf-8
+      date:
+      - Thu, 26 Feb 2026 15:47:25 GMT
+      expires:
+      - Thu, 19 Nov 1981 08:52:00 GMT
+      pragma:
+      - no-cache
+      server:
+      - Chuck Norris fears nothing that is not Emily.
+      set-cookie:
+      - dtsession=af8q1j3q92gttviplmb6en3rsdj2oi4r41qs61u0s5iv7papknbhuac2ik9kf85jop1qv8aeje0k7c4rfueftt7dvosnpipluu2etui;
+        expires=Sat, 28-Mar-2026 15:47:25 GMT; Max-Age=2592000; path=/; domain=.domaintools.com;
+        secure; HttpOnly
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-time:
+      - '25688'
+    status:
+      code: 200
+      message: OK
+version: 1
