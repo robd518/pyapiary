@@ -19,8 +19,25 @@ def log_method_call(func: Callable[P, R]) -> Callable[P, R]:
         sig = inspect.signature(func)
         bound = sig.bind(self, *args, **kwargs)
         bound.apply_defaults()
-        query_value = bound.arguments.get("query")
-        self._log(f"{caller} called with query: {query_value}")
+        call_args = {k: v for k, v in bound.arguments.items() if k != "self"}
+        query_value = call_args.get("query")
+
+        if query_value is not None:
+            self._log(f"{caller} called with query: {query_value}")
+        elif call_args:
+            # Fall back to a compact arg summary for methods that don't use a
+            # positional/keyword `query` parameter (e.g., kwargs-only search APIs).
+            summary_parts = []
+            for key, value in call_args.items():
+                if key == "kwargs" and isinstance(value, dict):
+                    summary_parts.append(f"kwargs_keys={sorted(value.keys())}")
+                elif key == "params" and isinstance(value, dict):
+                    summary_parts.append(f"params_keys={sorted(value.keys())}")
+                else:
+                    summary_parts.append(f"{key}={value!r}")
+            self._log(f"{caller} called with {', '.join(summary_parts)}")
+        else:
+            self._log(f"{caller} called")
         return func(self, *args, **kwargs)
     return wrapper
 
