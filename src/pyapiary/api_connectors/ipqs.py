@@ -36,6 +36,19 @@ class IPQSConnector(Broker):
         """
         return self.post("/url/", data={"url": query, "key": self.api_key, **kwargs})
 
+    @log_method_call
+    def phone_validation(self, query: str, **kwargs) -> httpx.Response:
+        """The IPQS Phone Number Validation API offers rapid analysis to determine the risk core,
+        country of origin, carrier, validity, owner information, and connection status of phone numbers
+
+        Args:
+            query (str): The phone number to look up.
+
+        Returns:
+            httpx.Response: the httpx.Response object
+        """
+        return self.post("/phone/", data={"phone": query, "key": self.api_key, **kwargs})
+
 
 @bubble_broker_init_signature()
 class AsyncIPQSConnector(AsyncBroker):
@@ -63,3 +76,16 @@ class AsyncIPQSConnector(AsyncBroker):
             httpx.Response: the httpx.Response object
         """
         return await self.post("/url/", data={"url": query, "key": self.api_key, **kwargs})
+
+    @log_method_call
+    async def phone_validation(self, query: str, **kwargs) -> httpx.Response:
+        """The IPQS Phone Number Validation API offers rapid analysis to determine the risk core,
+        country of origin, carrier, validity, owner information, and connection status of phone numbers
+
+        Args:
+            query (str): The phone number to look up.
+
+        Returns:
+            httpx.Response: the httpx.Response object
+        """
+        return await self.post("/phone/", data={"phone": query, "key": self.api_key, **kwargs})

@@ -51,3 +51,30 @@ async def test_async_malicious_url(mock_post):
         "/url/",
         data={"url": "example.com", "key": "test_key", "strictness": 1}
     )
+
+
+@patch("pyapiary.api_connectors.ipqs.AsyncIPQSConnector.post", new_callable=AsyncMock)
+@pytest.mark.asyncio
+async def test_async_phone_validation(mock_post):
+    import json
+
+    request = httpx.Request("POST", "https://www.ipqualityscore.com/api/json/url/")
+    payload = {"success": True, "phone": "8888888888"}
+    mock_response = httpx.Response(
+        200,
+        request=request,
+        content=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    mock_post.return_value = mock_response
+
+    connector = AsyncIPQSConnector(api_key="test_key")
+    response = await connector.phone_validation("8888888888", strictness=1)
+
+    assert isinstance(response, httpx.Response)
+    assert response.status_code == 200
+    assert response.json() == payload
+    mock_post.assert_awaited_once_with(
+        "/phone/",
+        data={"phone": "8888888888", "key": "test_key", "strictness": 1}
+    )

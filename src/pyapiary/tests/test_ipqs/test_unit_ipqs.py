@@ -46,3 +46,29 @@ def test_malicious_url(mock_post):
     )
     assert isinstance(result, httpx.Response)
     assert result.json() == payload
+
+
+@patch("pyapiary.api_connectors.ipqs.IPQSConnector.post")
+def test_phone_validation(mock_post):
+    # Build a real httpx.Response to match the new return type
+    import json
+
+    request = httpx.Request("POST", "https://www.ipqualityscore.com/api/json/phone/")
+    payload = {"success": True, "phone": "8888888888"}
+    mock_response = httpx.Response(
+        200,
+        request=request,
+        content=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    mock_post.return_value = mock_response
+
+    connector = IPQSConnector(api_key="test_key")
+    result = connector.phone_validation("8888888888")
+
+    mock_post.assert_called_once_with(
+        "/phone/",
+        data={"phone": "8888888888", "key": "test_key"},
+    )
+    assert isinstance(result, httpx.Response)
+    assert result.json() == payload
