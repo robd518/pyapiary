@@ -162,3 +162,6 @@ cython_debug/
 #.idea/
 
 .DS_Store
+.claude/
+CLAUDE.md
+AGENTS.md
