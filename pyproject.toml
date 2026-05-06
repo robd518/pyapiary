@@ -17,6 +17,9 @@ splunk-sdk = "^2.1.1"
 httpx = "^0.28.1"
 tenacity = "^9.1.2"
 pyodbc = "^5.3.0"
+psycopg-pool = {extras = ["binary", "pool"], version = "^3.3.1"}
+psycopg = {extras = ["pool"], version = "^3.3.4"}
+psycopg-binary = "^3.3.4"
 
 [tool.poetry.extras]
 odbc = ["pyodbc"]

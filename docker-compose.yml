@@ -47,6 +47,7 @@ services:
       - ./dev_env/splunk/init_app.sh:/init_app.sh
     entrypoint: [ "/bin/bash", "-c", "/init_app.sh & /sbin/entrypoint.sh start-service" ]
 
+  # both PG and ODBC connector use this data source, this is why dev_env/postgres does not have an init.sql
   odbc_db:
     image: postgres:15-alpine
     container_name: odbc_db

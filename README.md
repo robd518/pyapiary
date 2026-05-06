@@ -330,6 +330,16 @@ results = conn.query("search index=_internal | head 5")
 pytest -m integration
 ```
 
+
+### Manual Testing
+- Located in dev_env
+- Do not use pytest or mocking
+- run the docker-compose.yaml to stand up services, change directories into the folder in dev_env you wish to test
+- execute the following to test your module
+```
+poetry run python <your test file here>.py
+```
+
 ### 🧼 Suppress warnings
 
 Add this to `pytest.ini`:
