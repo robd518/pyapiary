@@ -3,11 +3,24 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 import pytest
 
-# Mock psycopg_pool before importing the module so tests run even when the
-# driver is not installed in the environment.
 sys.modules.setdefault("psycopg_pool", MagicMock())
 
 from pyapiary.dbms_connectors.postgres import PostgresConnector, AsyncPostgresConnector
+
+
+# ──────────────────────────────────────────────
+#  Helpers
+# ──────────────────────────────────────────────
+
+def make_sync_conn(cursor):
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=cursor)
+    mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+    return mock_conn
+
+def wire_pool(pg, conn):
+    pg.connection_pool.connection.return_value.__enter__ = MagicMock(return_value=conn)
+    pg.connection_pool.connection.return_value.__exit__ = MagicMock(return_value=False)
 
 
 # ──────────────────────────────────────────────
@@ -76,28 +89,42 @@ class TestPostgresConnectorClose:
 
 
 class TestPostgresConnectorQuery:
-    def test_query_returns_results(self, pg):
-        mock_conn = MagicMock()
-        mock_conn.execute.return_value.fetchall.return_value = [("row1",), ("row2",)]
-        pg.connection_pool.connection.return_value.__enter__ = MagicMock(return_value=mock_conn)
-        pg.connection_pool.connection.return_value.__exit__ = MagicMock(return_value=False)
-        mock_conn.transaction.return_value.__enter__ = MagicMock()
-        mock_conn.transaction.return_value.__exit__ = MagicMock(return_value=False)
+    def test_select_returns_rows(self, pg):
+        cur = MagicMock()
+        cur.description = [("col1",)]
+        cur.fetchall.return_value = [("row1",), ("row2",)]
+        wire_pool(pg, make_sync_conn(cur))
 
         result = pg.query("SELECT 1")
         assert result == [("row1",), ("row2",)]
-        mock_conn.execute.assert_called_once_with("SELECT 1", None)
+        cur.execute.assert_called_once_with("SELECT 1", None)
 
-    def test_query_passes_params(self, pg):
-        mock_conn = MagicMock()
-        mock_conn.execute.return_value.fetchall.return_value = []
-        pg.connection_pool.connection.return_value.__enter__ = MagicMock(return_value=mock_conn)
-        pg.connection_pool.connection.return_value.__exit__ = MagicMock(return_value=False)
-        mock_conn.transaction.return_value.__enter__ = MagicMock()
-        mock_conn.transaction.return_value.__exit__ = MagicMock(return_value=False)
+    def test_select_passes_params(self, pg):
+        cur = MagicMock()
+        cur.description = [("col1",)]
+        cur.fetchall.return_value = []
+        wire_pool(pg, make_sync_conn(cur))
 
         pg.query("SELECT * FROM t WHERE id = %s", (42,))
-        mock_conn.execute.assert_called_once_with("SELECT * FROM t WHERE id = %s", (42,))
+        cur.execute.assert_called_once_with("SELECT * FROM t WHERE id = %s", (42,))
+
+    def test_non_select_returns_none(self, pg):
+        cur = MagicMock()
+        cur.description = None  # INSERT/DDL has no description
+        wire_pool(pg, make_sync_conn(cur))
+
+        result = pg.query("INSERT INTO t VALUES (1)")
+        assert result is None
+        cur.fetchall.assert_not_called()
+
+    def test_select_empty_result_returns_empty_list(self, pg):
+        cur = MagicMock()
+        cur.description = [("col1",)]
+        cur.fetchall.return_value = []
+        wire_pool(pg, make_sync_conn(cur))
+
+        result = pg.query("SELECT 1 WHERE false")
+        assert result == []
 
 
 class TestPostgresConnectorBulkInsert:
@@ -111,12 +138,7 @@ class TestPostgresConnectorBulkInsert:
         mock_cursor.copy.return_value.__enter__ = MagicMock(return_value=mock_copy)
         mock_cursor.copy.return_value.__exit__ = MagicMock(return_value=False)
 
-        mock_conn = MagicMock()
-        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
-        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
-
-        pg.connection_pool.connection.return_value.__enter__ = MagicMock(return_value=mock_conn)
-        pg.connection_pool.connection.return_value.__exit__ = MagicMock(return_value=False)
+        wire_pool(pg, make_sync_conn(mock_cursor))
 
         data = [{"name": "alice", "age": 30}, {"name": "bob", "age": 25}]
         pg.bulk_insert("users", data)
@@ -196,36 +218,44 @@ class TestAsyncPostgresConnectorContextManager:
 
 
 class TestAsyncPostgresConnectorQuery:
-    @pytest.mark.asyncio
-    async def test_async_query_returns_results(self, async_pg):
-        mock_cursor = AsyncMock()
-        mock_cursor.fetchall.return_value = [("row1",)]
-
+    def _wire(self, async_pg, cur):
         mock_conn = AsyncMock()
-        mock_conn.execute.return_value = mock_cursor
-
+        mock_conn.execute = AsyncMock(return_value=cur)
         async_cm = AsyncMock()
         async_cm.__aenter__.return_value = mock_conn
         async_pg.connection_pool.connection.return_value = async_cm
+        return mock_conn
+
+    @pytest.mark.asyncio
+    async def test_select_returns_rows(self, async_pg):
+        cur = AsyncMock()
+        cur.description = [("col1",)]
+        cur.fetchall = AsyncMock(return_value=[("row1",)])
+        conn = self._wire(async_pg, cur)
 
         result = await async_pg.async_query("SELECT 1")
         assert result == [("row1",)]
-        mock_conn.execute.assert_awaited_once_with("SELECT 1", None)
+        conn.execute.assert_awaited_once_with("SELECT 1", None)
 
     @pytest.mark.asyncio
-    async def test_async_query_passes_params(self, async_pg):
-        mock_cursor = AsyncMock()
-        mock_cursor.fetchall.return_value = []
-
-        mock_conn = AsyncMock()
-        mock_conn.execute.return_value = mock_cursor
-
-        async_cm = AsyncMock()
-        async_cm.__aenter__.return_value = mock_conn
-        async_pg.connection_pool.connection.return_value = async_cm
+    async def test_select_passes_params(self, async_pg):
+        cur = AsyncMock()
+        cur.description = [("col1",)]
+        cur.fetchall = AsyncMock(return_value=[])
+        conn = self._wire(async_pg, cur)
 
         await async_pg.async_query("SELECT * FROM t WHERE id = %s", (1,))
-        mock_conn.execute.assert_awaited_once_with("SELECT * FROM t WHERE id = %s", (1,))
+        conn.execute.assert_awaited_once_with("SELECT * FROM t WHERE id = %s", (1,))
+
+    @pytest.mark.asyncio
+    async def test_non_select_returns_none(self, async_pg):
+        cur = AsyncMock()
+        cur.description = None
+        conn = self._wire(async_pg, cur)
+
+        result = await async_pg.async_query("INSERT INTO t VALUES (1)")
+        assert result is None
+        cur.fetchall.assert_not_called()
 
 
 class TestAsyncPostgresConnectorBulkInsert:
