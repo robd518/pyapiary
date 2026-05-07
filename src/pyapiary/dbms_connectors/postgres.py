@@ -38,7 +38,7 @@ class PostgresConnector:
             with conn.cursor() as cur:
                 # claude recommended a transaction wrapper here
                 cur.execute(query, params)
-                if cur.rowcount >0:
+                if cur.description:
                     return cur.fetchall()
                 else:
                     return None
@@ -86,7 +86,10 @@ class AsyncPostgresConnector:
         """
         async with self.connection_pool.connection() as conn:
             cur = await conn.execute(query, params)
-            return await cur.fetchall()
+            if cur.description:
+                return await cur.fetchall()
+            else:
+                return None
 
     async def async_bulk_insert(self, table_name: str, data: List[Dict[str, Any]]):
         if not data:
