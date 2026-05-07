@@ -35,9 +35,13 @@ class PostgresConnector:
         https://www.psycopg.org/psycopg3/docs/api/pool.html#module-psycopg_pool
         """
         with self.connection_pool.connection() as conn:
-            with conn.transaction():
+            with conn.cursor() as cur:
                 # claude recommended a transaction wrapper here
-                return conn.execute(query, params).fetchall()
+                cur.execute(query, params)
+                if cur.rowcount >0:
+                    return cur.fetchall()
+                else:
+                    return None
 
     def bulk_insert(self, table: str, data: List[Dict[str, Any]]):
         if not data:
