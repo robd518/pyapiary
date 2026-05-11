@@ -1,0 +1,4 @@
+connector.name=postgresql
+connection-url=jdbc:postgresql://postgres-db:5432/target_db
+connection-user=
+connection-password=

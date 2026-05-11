@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Trino
+etc/catalog/*.properties
+
 # Distribution / packaging
 .Python
 build/

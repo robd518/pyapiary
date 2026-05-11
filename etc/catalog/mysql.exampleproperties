@@ -1,0 +1,4 @@
+connector.name=mysql
+connection-url=jdbc:mysql://mysql-db:3306/target_db
+connection-user=
+connection-password=

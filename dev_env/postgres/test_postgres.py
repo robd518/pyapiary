@@ -3,9 +3,8 @@ from pyapiary.helpers import combine_env_configs, setup_logger
 from typing import Dict, Any
 
 env_config: Dict[str, Any] = combine_env_configs()
-
 logger = setup_logger("pg logger")
-with PostgresConnector(conn_str=env_config["PGSQL_DSN"], logger=logger) as conn:
+with PostgresConnector(conn_str=env_config["PSQL_DSN"], logger=logger) as conn:
 
     # Optional insert test
     logger.info("inserting one row")

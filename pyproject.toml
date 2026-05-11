@@ -20,6 +20,7 @@ pyodbc = "^5.3.0"
 psycopg-pool = {extras = ["binary", "pool"], version = "^3.3.1"}
 psycopg = {extras = ["pool"], version = "^3.3.4"}
 psycopg-binary = "^3.3.4"
+trino = "^0.337.0"
 
 [tool.poetry.extras]
 odbc = ["pyodbc"]

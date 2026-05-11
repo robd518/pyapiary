@@ -9,6 +9,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+    networks:
+      - dev_lab
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
@@ -20,6 +22,8 @@ services:
     ports:
       - "9200:9200"
     mem_limit: 512m
+    networks:
+      - dev_lab
 
   es-init:
     image: python:3.11-slim
@@ -31,6 +35,8 @@ services:
       - ./.env
     entrypoint: >
       sh -c "pip install --quiet requests python-dotenv && python /init.py"
+    networks:
+      - dev_lab
 
   splunk:
     image: vivekrsplunk/splunk:9.2.1-78803f08aabb-ef8f72f-arm64-ubuntu-20
@@ -46,6 +52,8 @@ services:
     volumes:
       - ./dev_env/splunk/init_app.sh:/init_app.sh
     entrypoint: [ "/bin/bash", "-c", "/init_app.sh & /sbin/entrypoint.sh start-service" ]
+    networks:
+      - dev_lab
 
   # both PG and ODBC connector use this data source, this is why dev_env/postgres does not have an init.sql
   odbc_db:
@@ -59,8 +67,37 @@ services:
       - "5432:5432"
     volumes:
       - ./dev_env/odbc/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - dev_lab
+  
+  mysql_db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_TARGET_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      - dev_lab
 
   proxy:
     image: ubuntu/squid:latest
     ports:
       - "3128:3128"
+    networks:
+      - dev_lab
+  
+  trino:
+    image: trinodb/trino:latest
+    ports: 
+      - "8080:8080"
+    volumes:
+      - ./etc/catalog:/etc/trino/catalog
+    networks:
+      - dev_lab
+
+networks:
+  dev_lab:
+    external: true
