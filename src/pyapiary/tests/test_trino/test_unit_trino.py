@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 from pyapiary.dbms_connectors.trino import TrinoConnector
 
 
@@ -15,11 +15,12 @@ def mock_connect(mocker):
 def connector(mock_connect):
     """Return a TrinoConnector backed by a mocked connection."""
     return TrinoConnector(
-        host="localhost",
-        port=8080,
+        host="trino.trashcollector.dev",
+        port=443,
         user="test_user",
         catalog="hive",
         schema="default",
+        http_scheme="https",
     )
 
 
@@ -28,30 +29,32 @@ def connector(mock_connect):
 # ---------------------------------------------------------------------------
 
 class TestInit:
-    def test_connect_called_with_correct_args(self, mocker):
+    def test_connect_called_with_provided_kwargs(self, mocker):
         mock_connect = mocker.patch("pyapiary.dbms_connectors.trino.connect")
-        TrinoConnector(host="myhost", port=9090, user="alice", catalog="iceberg", schema="raw")
+        TrinoConnector(host="myhost", port=443, user="alice", http_scheme="https")
         mock_connect.assert_called_once_with(
             host="myhost",
-            port=9090,
+            port=443,
             user="alice",
-            catalog="iceberg",
-            schema="raw",
+            http_scheme="https",
         )
 
-    def test_connect_called_without_optional_args(self, mocker):
+    def test_connect_called_with_minimal_kwargs(self, mocker):
         mock_connect = mocker.patch("pyapiary.dbms_connectors.trino.connect")
-        TrinoConnector(host="myhost", port=9090, user="alice")
-        mock_connect.assert_called_once_with(
-            host="myhost",
-            port=9090,
-            user="alice",
-            catalog=None,
-            schema=None,
-        )
+        TrinoConnector(host="myhost", port=8080, user="alice")
+        mock_connect.assert_called_once_with(host="myhost", port=8080, user="alice")
 
     def test_conn_attribute_set(self, mock_connect, connector):
         assert connector.conn is mock_connect
+
+    def test_arbitrary_kwargs_forwarded(self, mocker):
+        """Any kwarg the trino client supports should be forwarded as-is."""
+        mock_connect = mocker.patch("pyapiary.dbms_connectors.trino.connect")
+        TrinoConnector(host="h", port=443, user="u", http_scheme="https",
+                       verify=False, session_properties={"query_max_run_time": "1h"})
+        _, call_kwargs = mock_connect.call_args
+        assert call_kwargs["verify"] is False
+        assert call_kwargs["session_properties"] == {"query_max_run_time": "1h"}
 
 
 # ---------------------------------------------------------------------------
@@ -108,7 +111,17 @@ class TestQuery:
         mock_connect.cursor.return_value.__enter__.return_value = mock_cursor
 
         with pytest.raises(RuntimeError, match="syntax error"):
-            connector.query("SELECT bad syntax %%")
+            connector.query("SELECT bad %%")
+
+    def test_show_catalogs(self, mock_connect, connector):
+        mock_cursor = MagicMock()
+        mock_cursor.description = [("Catalog",)]
+        mock_cursor.fetchall.return_value = [("hive",), ("iceberg",), ("tpch",)]
+        mock_connect.cursor.return_value.__enter__.return_value = mock_cursor
+
+        result = connector.query("SHOW CATALOGS")
+
+        assert result == [("hive",), ("iceberg",), ("tpch",)]
 
 
 # ---------------------------------------------------------------------------
@@ -123,27 +136,18 @@ class TestBulkInsert:
         result = connector.bulk_insert("my_table", [{"id": 1, "name": "alice"}])
 
         expected_query = "INSERT INTO my_table (id, name) VALUES (?, ?)"
-        mock_cursor.executemany.assert_called_once_with(
-            expected_query, [(1, "alice")]
-        )
+        mock_cursor.executemany.assert_called_once_with(expected_query, [(1, "alice")])
         assert result is True
 
     def test_inserts_multiple_rows(self, mock_connect, connector):
         mock_cursor = MagicMock()
         mock_connect.cursor.return_value.__enter__.return_value = mock_cursor
 
-        data = [
-            {"id": 1, "val": "a"},
-            {"id": 2, "val": "b"},
-            {"id": 3, "val": "c"},
-        ]
+        data = [{"id": 1, "val": "a"}, {"id": 2, "val": "b"}, {"id": 3, "val": "c"}]
         result = connector.bulk_insert("my_table", data)
 
-        expected_values = [(1, "a"), (2, "b"), (3, "c")]
-        _, call_values = mock_cursor.executemany.call_args
-        # positional args
         actual_values = mock_cursor.executemany.call_args[0][1]
-        assert actual_values == expected_values
+        assert actual_values == [(1, "a"), (2, "b"), (3, "c")]
         assert result is True
 
     def test_returns_none_for_empty_list(self, mock_connect, connector, capsys):
@@ -165,10 +169,10 @@ class TestBulkInsert:
         mock_cursor = MagicMock()
         mock_connect.cursor.return_value.__enter__.return_value = mock_cursor
 
-        connector.bulk_insert("schema.target_table", [{"x": 99}])
+        connector.bulk_insert("hive.default.target_table", [{"x": 99}])
 
         actual_query = mock_cursor.executemany.call_args[0][0]
-        assert "schema.target_table" in actual_query
+        assert "hive.default.target_table" in actual_query
 
     def test_column_order_matches_first_row_keys(self, mock_connect, connector):
         mock_cursor = MagicMock()
@@ -178,9 +182,18 @@ class TestBulkInsert:
         connector.bulk_insert("t", data)
 
         actual_query = mock_cursor.executemany.call_args[0][0]
-        # columns in query should match key order of first dict
         for col in ["z", "a", "m"]:
             assert col in actual_query
+
+    def test_placeholder_count_matches_column_count(self, mock_connect, connector):
+        mock_cursor = MagicMock()
+        mock_connect.cursor.return_value.__enter__.return_value = mock_cursor
+
+        data = [{"a": 1, "b": 2, "c": 3, "d": 4}]
+        connector.bulk_insert("t", data)
+
+        actual_query = mock_cursor.executemany.call_args[0][0]
+        assert actual_query.count("?") == 4
 
     def test_propagates_executemany_exception(self, mock_connect, connector):
         mock_cursor = MagicMock()
