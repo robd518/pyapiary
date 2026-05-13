@@ -2,13 +2,9 @@ from trino.dbapi import connect
 from typing import List, Dict, Any
 
 class TrinoConnector:
-    def __init__(self, host, port, user, catalog=None, schema=None):
+    def __init__(self, **kwargs):
         self.conn = connect(
-            host=host,
-            port=port,
-            user=user,
-            catalog=catalog,
-            schema=schema
+            **kwargs
         )
     
     def query(self, query_str):
